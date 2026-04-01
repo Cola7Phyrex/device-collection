@@ -1,0 +1,24 @@
+{
+  "name": "设备管理",
+  "short_name": "设备管理",
+  "description": "管理您的设备、配件、订阅和欲购清单",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "orientation": "portrait",
+  "scope": ".",
+  "lang": "zh-CN",
+  "icons": [
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

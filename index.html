@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#ffffff">
+    <title>设备管理</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f7;
+            --text-primary: #000000;
+            --text-secondary: #666666;
+            --accent-yellow: #ffcc00;
+            --accent-red: #ff3b30;
+            --gray-light: #e5e5ea;
+            --gray-medium: #8e8e93;
+            --gray-dark: #3a3a3c;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            padding-bottom: 80px;
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            border-bottom: 1px solid var(--gray-light);
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .header-title {
+            text-align: center;
+            padding: 12px 16px;
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .tab-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-around;
+            padding-bottom: env(safe-area-inset-bottom);
+            z-index: 100;
+        }
+
+        .tab-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-item.active {
+            color: var(--gray-dark);
+            font-weight: 700;
+        }
+
+        .tab-item:not(.active) {
+            color: var(--gray-medium);
+        }
+
+        .tab-icon {
+            width: 24px;
+            height: 24px;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .tab-label {
+            font-size: 10px;
+        }
+
+        .page {
+            display: none;
+            padding: 60px 16px 20px;
+            min-height: 100vh;
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .sub-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 16px;
+            overflow-x: auto;
+            padding: 4px 0;
+            justify-content: center;
+        }
+
+        .sub-tab {
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: var(--bg-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+
+        .sub-tab.active {
+            background: var(--gray-dark);
+            color: white;
+        }
+
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: var(--accent-yellow);
+            color: white;
+            border: none;
+            font-size: 28px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99;
+            transition: transform 0.2s;
+        }
+
+        .fab:active {
+            transform: scale(0.95);
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .card-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--gray-light);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        .btn-icon.delete {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--accent-red);
+        }
+
+        .card-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+
+        .stat {
+            flex: 1;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--gray-light);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-yellow), var(--accent-red));
+            border-radius: 3px;
+            transition: width 0.3s;
+        }
+
+        .frequency-bar {
+            display: flex;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .freq-day {
+            flex: 1;
+            height: 8px;
+            border-radius: 4px;
+            background: var(--gray-light);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .freq-day.active {
+            background: var(--gray-dark);
+            box-shadow: 0 0 8px rgba(0,0,0,0.2);
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 200;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            width: 100%;
+            max-height: 90vh;
+            border-radius: 20px 20px 0 0;
+            overflow: hidden;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); }
+            to { transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .modal-title {
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            font-size: 24px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--accent-yellow);
+        }
+
+        .modal-body {
+            padding: 16px;
+            overflow-y: auto;
+            max-height: calc(90vh - 60px);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .form-label .required {
+            color: var(--accent-red);
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--gray-light);
+            border-radius: 10px;
+            font-size: 16px;
+            background: var(--bg-primary);
+            -webkit-appearance: none;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: var(--accent-yellow);
+        }
+
+        .form-textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: var(--gray-dark);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn-secondary {
+            width: 100%;
+            padding: 14px;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn-danger {
+            width: 100%;
+            padding: 14px;
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--accent-red);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        .btn-match {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            background: var(--accent-yellow);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            margin-bottom: 16px;
+        }
+
+        .summary-box {
+            background: var(--gray-dark);
+            color: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .summary-label {
+            font-size: 13px;
+            opacity: 0.8;
+            margin-bottom: 4px;
+        }
+
+        .summary-value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .summary-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .data-card {
+            background: var(--bg-secondary);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .data-card-info h3 {
+            font-size: 15px;
+            font-weight: 600;
+        }
+
+        .data-card-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        .data-card-value {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .action-btn {
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            text-align: center;
+            width: 100%;
+        }
+
+        .action-btn.import {
+            background: var(--gray-dark);
+            color: white;
+        }
+
+        .action-btn.export {
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .action-btn.delete {
+            background: var(--accent-red);
+            color: white;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        .tag {
+            padding: 4px 10px;
+            background: var(--accent-red);
+            color: white;
+            border-radius: 12px;
+            font-size: 11px;
+        }
+
+        .hidden-file-input {
+            display: none;
+        }
+
+        .next-payment {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            background: rgba(255, 204, 0, 0.15);
+            color: #b8860b;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        .next-payment.overdue {
+            background: rgba(255, 59, 48, 0.15);
+            color: var(--accent-red);
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <div class="header-title" id="pageTitle">设备</div>
+    </div>
+
+    <!-- 设备页面 -->
+    <div class="page active" id="page-devices">
+        <div class="sub-tabs">
+            <div class="sub-tab active" data-filter="all">全部</div>
+            <div class="sub-tab" data-filter="phone">手机</div>
+            <div class="sub-tab" data-filter="tablet">平板</div>
+            <div class="sub-tab" data-filter="computer">电脑</div>
+        </div>
+        <div id="devicesList"></div>
+    </div>
+
+    <!-- 配件页面 -->
+    <div class="page" id="page-accessories">
+        <div id="accessoriesList"></div>
+    </div>
+
+    <!-- 订阅页面 -->
+    <div class="page" id="page-subscriptions">
+        <div id="subscriptionsList"></div>
+        <div class="summary-box">
+            <div class="summary-label">订阅总支出</div>
+            <div class="summary-value" id="subscriptionTotal">¥0</div>
+            <div class="summary-toggle" id="subscriptionToggle">
+                <span>切换显示</span>
+                <span id="subscriptionToggleText">每月平均</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 欲购页面 -->
+    <div class="page" id="page-wishlist">
+        <div id="wishlistList"></div>
+    </div>
+
+    <!-- 数据页面 -->
+    <div class="page" id="page-data">
+        <div class="data-card">
+            <div class="data-card-info">
+                <h3>设备总价</h3>
+                <p>所有设备的购买价格总和</p>
+            </div>
+            <div class="data-card-value" id="dataDeviceTotal">¥0</div>
+        </div>
+        <div class="data-card">
+            <div class="data-card-info">
+                <h3>配件总价</h3>
+                <p>所有配件的购买价格总和</p>
+            </div>
+            <div class="data-card-value" id="dataAccessoryTotal">¥0</div>
+        </div>
+        <div class="data-card">
+            <div class="data-card-info">
+                <h3>订阅年费</h3>
+                <p>所有订阅的年化费用</p>
+            </div>
+            <div class="data-card-value" id="dataSubscriptionTotal">¥0</div>
+        </div>
+        <div class="data-card">
+            <div class="data-card-info">
+                <h3>欲购总价</h3>
+                <p>所有欲购项目的价格总和</p>
+            </div>
+            <div class="data-card-value" id="dataWishlistTotal">¥0</div>
+        </div>
+        <div class="action-buttons">
+            <button class="action-btn import" onclick="importData()">导入数据</button>
+            <button class="action-btn export" onclick="exportData()">导出数据</button>
+            <button class="action-btn delete" onclick="confirmDeleteAll()">删除数据</button>
+        </div>
+        <input type="file" id="importFile" class="hidden-file-input" accept=".json" onchange="handleImport(event)">
+    </div>
+
+    <!-- 底部导航 -->
+    <div class="tab-bar">
+        <div class="tab-item active" data-page="devices">
+            <div class="tab-icon">📱</div>
+            <span class="tab-label">设备</span>
+        </div>
+        <div class="tab-item" data-page="accessories">
+            <div class="tab-icon">🎧</div>
+            <span class="tab-label">配件</span>
+        </div>
+        <div class="tab-item" data-page="subscriptions">
+            <div class="tab-icon">📅</div>
+            <span class="tab-label">订阅</span>
+        </div>
+        <div class="tab-item" data-page="wishlist">
+            <div class="tab-icon">🛒</div>
+            <span class="tab-label">欲购</span>
+        </div>
+        <div class="tab-item" data-page="data">
+            <div class="tab-icon">📊</div>
+            <span class="tab-label">数据</span>
+        </div>
+    </div>
+
+    <!-- 添加按钮 -->
+    <button class="fab" id="fabBtn" onclick="openModal()">+</button>
+
+    <!-- 模态框 -->
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">新建设备</span>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+
+    <script>
+        const STORAGE_KEYS = {
+            devices: 'device_manager_devices',
+            accessories: 'device_manager_accessories',
+            subscriptions: 'device_manager_subscriptions',
+            wishlist: 'device_manager_wishlist'
+        };
+
+        let currentPage = 'devices';
+        let currentFilter = 'all';
+        let editingId = null;
+        let subscriptionViewMode = 'monthly';
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTabs();
+            initSubTabs();
+            initSubscriptionToggle();
+            renderAll();
+        });
+
+        function initTabs() {
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const page = tab.dataset.page;
+                    switchPage(page);
+                });
+            });
+        }
+
+        function switchPage(page) {
+            currentPage = page;
+            editingId = null;
+
+            document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+            document.querySelector(`.tab-item[data-page="${page}"]`).classList.add('active');
+
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(`page-${page}`).classList.add('active');
+
+            const titles = { devices: '设备', accessories: '配件', subscriptions: '订阅', wishlist: '欲购', data: '数据' };
+            document.getElementById('pageTitle').textContent = titles[page];
+
+            if (page === 'data') updateDataStats();
+            if (page === 'subscriptions') updateSubscriptionSummary();
+        }
+
+        function initSubTabs() {
+            document.querySelectorAll('.sub-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.sub-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentFilter = tab.dataset.filter;
+                    renderDevices();
+                });
+            });
+        }
+
+        function initSubscriptionToggle() {
+            document.getElementById('subscriptionToggle').addEventListener('click', () => {
+                subscriptionViewMode = subscriptionViewMode === 'monthly' ? 'yearly' : 'monthly';
+                document.getElementById('subscriptionToggleText').textContent = subscriptionViewMode === 'monthly' ? '每月平均' : '每年平均';
+                updateSubscriptionSummary();
+            });
+        }
+
+        function getData(key) {
+            const data = localStorage.getItem(STORAGE_KEYS[key]);
+            return data ? JSON.parse(data) : [];
+        }
+
+        function saveData(key, data) {
+            localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(data));
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function calculateServiceDays(purchaseDate) {
+            if (!purchaseDate) return 0;
+            const start = new Date(purchaseDate);
+            const now = new Date();
+            return Math.floor((now - start) / (1000 * 60 * 60 * 24));
+        }
+
+        function formatDuration(days) {
+            if (days < 30) return `${days}天`;
+            if (days < 365) return `${Math.floor(days / 30)}个月`;
+            const years = Math.floor(days / 365);
+            const months = Math.floor((days % 365) / 30);
+            return months > 0 ? `${years}年${months}个月` : `${years}年`;
+        }
+
+        function renderAll() {
+            renderDevices();
+            renderAccessories();
+            renderSubscriptions();
+            renderWishlist();
+        }
+
+        function renderDevices() {
+            const devices = getData('devices');
+            const container = document.getElementById('devicesList');
+            let filtered = currentFilter === 'all' ? devices : devices.filter(d => d.type === currentFilter);
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📱</div><p>暂无设备</p><p style="font-size: 13px; margin-top: 8px;">点击右下角按钮添加</p></div>';
+                return;
+            }
+
+            container.innerHTML = filtered.map(device => {
+                const serviceDays = calculateServiceDays(device.purchaseDate);
+                const lifespan = { phone: 4, tablet: 6, computer: 8 }[device.type] || 4;
+                const lifespanDays = lifespan * 365;
+                const warrantyPercent = Math.min(100, Math.round((serviceDays / lifespanDays) * 100));
+                const typeLabels = { phone: '手机', tablet: '平板', computer: '电脑' };
+                const frequency = device.frequency || [false, false, false, false, false, false, false];
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${device.name}</div>
+                                <div class="card-subtitle">${device.brand || typeLabels[device.type]}${device.releaseYear ? ' · ' + device.releaseYear : ''}</div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-icon" onclick="editDevice('${device.id}')">✏️</button>
+                                <button class="btn-icon delete" onclick="deleteDevice('${device.id}')">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat">
+                                <div class="stat-label">服役时长</div>
+                                <div class="stat-value">${formatDuration(serviceDays)}</div>
+                            </div>
+                            <div class="stat">
+                                <div class="stat-label">保质期</div>
+                                <div class="stat-value">${warrantyPercent}%</div>
+                                <div class="progress-bar"><div class="progress-fill" style="width: ${warrantyPercent}%"></div></div>
+                            </div>
+                        </div>
+                        <div class="frequency-bar">
+                            ${[0,1,2,3,4,5,6].map((day, i) => `
+                                <div class="freq-day ${frequency[i] ? 'active' : ''}" onclick="toggleFrequency('devices', '${device.id}', ${i})"></div>
+                            `).join('')}
+                        </div>
+                        ${device.tags ? `<div class="tag-list">${device.tags.split(',').map(t => t.trim() ? `<span class="tag">${t.trim()}</span>` : '').join('')}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAccessories() {
+            const accessories = getData('accessories');
+            const container = document.getElementById('accessoriesList');
+
+            if (accessories.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🎧</div><p>暂无配件</p><p style="font-size: 13px; margin-top: 8px;">点击右下角按钮添加</p></div>';
+                return;
+            }
+
+            container.innerHTML = accessories.map(item => {
+                const serviceDays = calculateServiceDays(item.purchaseDate);
+                const frequency = item.frequency || [false, false, false, false, false, false, false];
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${item.name}</div>
+                                <div class="card-subtitle">${item.brand || '配件'}${item.location ? ' · ' + item.location : ''}</div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-icon" onclick="editAccessory('${item.id}')">✏️</button>
+                                <button class="btn-icon delete" onclick="deleteAccessory('${item.id}')">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat">
+                                <div class="stat-label">服役时长</div>
+                                <div class="stat-value">${formatDuration(serviceDays)}</div>
+                            </div>
+                        </div>
+                        <div class="frequency-bar">
+                            ${[0,1,2,3,4,5,6].map((day, i) => `
+                                <div class="freq-day ${frequency[i] ? 'active' : ''}" onclick="toggleFrequency('accessories', '${item.id}', ${i})"></div>
+                            `).join('')}
+                        </div>
+                        ${item.tags ? `<div class="tag-list">${item.tags.split(',').map(t => t.trim() ? `<span class="tag">${t.trim()}</span>` : '').join('')}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderSubscriptions() {
+            const subscriptions = getData('subscriptions');
+            const container = document.getElementById('subscriptionsList');
+
+            if (subscriptions.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📅</div><p>暂无订阅</p><p style="font-size: 13px; margin-top: 8px;">点击右下角按钮添加</p></div>';
+                updateSubscriptionSummary();
+                return;
+            }
+
+            container.innerHTML = subscriptions.map(sub => {
+                const nextPayment = calculateNextPayment(sub.startDate, sub.cycle);
+                const isOverdue = new Date(nextPayment) < new Date();
+                const frequency = sub.frequency || [false, false, false, false, false, false, false];
+
+                return `
+                    <div class="card">
+                        <div class="card-header">
+                            <div>
+                                <div class="card-title">${sub.name}</div>
+                                <div class="card-subtitle">${sub.brand || '订阅服务'}</div>
+                            </div>
+                            <div class="card-actions">
+                                <button class="btn-icon" onclick="editSubscription('${sub.id}')">✏️</button>
+                                <button class="btn-icon delete" onclick="deleteSubscription('${sub.id}')">🗑️</button>
+                            </div>
+                        </div>
+                        <div class="card-stats">
+                            <div class="stat">
+                                <div class="stat-label">价格</div>
+                                <div class="stat-value">¥${sub.price || 0}</div>
+                            </div>
+                        </div>
+                        <div class="next-payment ${isOverdue ? 'overdue' : ''}">
+                            ${isOverdue ? '⚠️' : '💳'} 下次扣款: ${nextPayment}
+                        </div>
+                        <div class="frequency-bar">
+                            ${[0,1,2,3,4,5,6].map((day, i) => `
+                                <div class="freq-day ${frequency[i] ? 'active' : ''}" onclick="toggleFrequency('subscriptions', '${sub.id}', ${i})"></div>
+                            `).join('')}
+                        </div>
+                        ${sub.tags ? `<div class="tag-list">${sub.tags.split(',').map(t => t.trim() ? `<span class="tag">${t.trim()}</span>` : '').join('')}</div>` : ''}
+                    </div>
+                `;
+            }).join('');
+
+            updateSubscriptionSummary();
+        }
+
+        function calculateNextPayment(startDate, cycle) {
+            if (!startDate || !cycle) return '未设置';
+
+            const cycleDays = {
+                daily: 1, weekly: 7, monthly: 30, quarterly: 90, halfyear: 180, yearly: 365
+            }[cycle] || parseInt(cycle) || 30;
+
+            let nextDate = new Date(startDate);
+            const now = new Date();
+
+            if (nextDate > now) {
+                return nextDate.toISOString().split('T')[0];
+            }
+
+            while (nextDate <= now) {
+                nextDate.setDate(nextDate.getDate() + cycleDays);
+            }
+
+            return nextDate.toISOString().split('T')[0];
+        }
+
+        function updateSubscriptionSummary() {
+            const subscriptions = getData('subscriptions');
+            let total = 0;
+
+            subscriptions.forEach(sub => {
+                const price = parseFloat(sub.price) || 0;
+                const cycleDays = {
+                    daily: 1, weekly: 7, monthly: 30, quarterly: 90, halfyear: 180, yearly: 365
+                }[sub.cycle] || parseInt(sub.cycle) || 30;
+
+                if (subscriptionViewMode === 'monthly') {
+                    total += (price * 30) / cycleDays;
+                } else {
+                    total += (price * 365) / cycleDays;
+                }
+            });
+
+            document.getElementById('subscriptionTotal').textContent = `¥${Math.round(total)}`;
+        }
+
+        function renderWishlist() {
+            const wishlist = getData('wishlist');
+            const container = document.getElementById('wishlistList');
+
+            if (wishlist.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🛒</div><p>暂无欲购项目</p><p style="font-size: 13px; margin-top: 8px;">点击右下角按钮添加</p></div>';
+                return;
+            }
+
+            container.innerHTML = wishlist.map(item => `
+                <div class="card">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${item.name}</div>
+                            <div class="card-subtitle">${item.brand || '待购'}${item.releaseDate ? ' · 发布: ' + item.releaseDate : ''}</div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn-icon" onclick="editWishlist('${item.id}')">✏️</button>
+                            <button class="btn-icon delete" onclick="deleteWishlist('${item.id}')">🗑️</button>
+                        </div>
+                    </div>
+                    ${item.price ? `<div class="card-stats"><div class="stat"><div class="stat-label">价格</div><div class="stat-value">¥${item.price}</div></div></div>` : ''}
+                    ${item.reason ? `<p style="font-size: 13px; color: var(--text-secondary); margin-top: 8px;">${item.reason}</p>` : ''}
+                    ${item.tags ? `<div class="tag-list">${item.tags.split(',').map(t => t.trim() ? `<span class="tag">${t.trim()}</span>` : '').join('')}</div>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function toggleFrequency(type, id, dayIndex) {
+            const data = getData(type);
+            const item = data.find(d => d.id === id);
+            if (!item) return;
+
+            item.frequency = item.frequency || [false, false, false, false, false, false, false];
+            item.frequency[dayIndex] = !item.frequency[dayIndex];
+
+            saveData(type, data);
+            if (type === 'devices') renderDevices();
+            else if (type === 'accessories') renderAccessories();
+            else if (type === 'subscriptions') renderSubscriptions();
+        }
+
+        function openModal() {
+            editingId = null;
+            if (currentPage === 'devices') showDeviceForm();
+            else if (currentPage === 'accessories') showAccessoryForm();
+            else if (currentPage === 'subscriptions') showSubscriptionForm();
+            else if (currentPage === 'wishlist') showWishlistForm();
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function showDeviceForm(device = null) {
+            editingId = device ? device.id : null;
+            document.getElementById('modalTitle').textContent = device ? '编辑设备' : '新建设备';
+            document.getElementById('modalBody').innerHTML = `
+                <button class="btn-match" onclick="matchDeviceData()">🔍 匹配数据</button>
+                <div class="form-group">
+                    <label class="form-label">设备名称 <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="deviceName" value="${device ? device.name : ''}" placeholder="例如: iPhone 15 Pro">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">设备类型 <span class="required">*</span></label>
+                    <select class="form-select" id="deviceType">
+                        <option value="">请选择</option>
+                        <option value="phone" ${device && device.type === 'phone' ? 'selected' : ''}>手机</option>
+                        <option value="tablet" ${device && device.type === 'tablet' ? 'selected' : ''}>平板</option>
+                        <option value="computer" ${device && device.type === 'computer' ? 'selected' : ''}>电脑</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">品牌</label>
+                    <input type="text" class="form-input" id="deviceBrand" value="${device ? device.brand || '' : ''}" placeholder="例如: Apple">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">购买时间</label>
+                    <input type="date" class="form-input" id="devicePurchaseDate" value="${device ? device.purchaseDate || '' : ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">购买价格</label>
+                    <input type="number" class="form-input" id="devicePrice" value="${device ? device.price || '' : ''}" placeholder="例如: 8999">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">发布年份</label>
+                    <input type="number" class="form-input" id="deviceReleaseYear" value="${device ? device.releaseYear || '' : ''}" placeholder="例如: 2024">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">内存</label>
+                    <input type="text" class="form-input" id="deviceRAM" value="${device ? device.ram || '' : ''}" placeholder="例如: 8GB">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">硬盘</label>
+                    <input type="text" class="form-input" id="deviceStorage" value="${device ? device.storage || '' : ''}" placeholder="例如: 256GB">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">CPU</label>
+                    <input type="text" class="form-input" id="deviceCPU" value="${device ? device.cpu || '' : ''}" placeholder="例如: A17 Pro">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">GPU (仅电脑)</label>
+                    <input type="text" class="form-input" id="deviceGPU" value="${device ? device.gpu || '' : ''}" placeholder="例如: M3 Pro GPU">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">标签 (用逗号分隔)</label>
+                    <input type="text" class="form-input" id="deviceTags" value="${device ? device.tags || '' : ''}" placeholder="例如: 主力机, 工作用">
+                </div>
+                <button class="btn-primary" onclick="saveDevice()">保存</button>
+                ${device ? '<button class="btn-danger" onclick="deleteDevice(\'' + device.id + '\'); closeModal();">删除</button>' : ''}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function matchDeviceData() {
+            const name = document.getElementById('deviceName').value;
+            const brand = document.getElementById('deviceBrand').value;
+            const year = document.getElementById('deviceReleaseYear').value;
+
+            if (!name) {
+                alert('请先输入设备名称');
+                return;
+            }
+
+            const query = `${brand || ''} ${name} ${year || ''} 价格 发布年份 内存 硬盘 CPU GPU`.trim();
+            window.open(`https://www.bing.com/search?q=${encodeURIComponent(query)}`, '_blank');
+        }
+
+        function saveDevice() {
+            const name = document.getElementById('deviceName').value.trim();
+            const type = document.getElementById('deviceType').value;
+
+            if (!name || !type) {
+                alert('请填写必填项');
+                return;
+            }
+
+            const device = {
+                id: editingId || generateId(),
+                name,
+                type,
+                brand: document.getElementById('deviceBrand').value.trim(),
+                purchaseDate: document.getElementById('devicePurchaseDate').value,
+                price: document.getElementById('devicePrice').value,
+                releaseYear: document.getElementById('deviceReleaseYear').value,
+                ram: document.getElementById('deviceRAM').value.trim(),
+                storage: document.getElementById('deviceStorage').value.trim(),
+                cpu: document.getElementById('deviceCPU').value.trim(),
+                gpu: document.getElementById('deviceGPU').value.trim(),
+                tags: document.getElementById('deviceTags').value.trim(),
+                frequency: editingId ? (getData('devices').find(d => d.id === editingId)?.frequency || [false,false,false,false,false,false,false]) : [false,false,false,false,false,false,false]
+            };
+
+            const devices = getData('devices');
+            if (editingId) {
+                const index = devices.findIndex(d => d.id === editingId);
+                if (index >= 0) devices[index] = device;
+            } else {
+                devices.push(device);
+            }
+
+            saveData('devices', devices);
+            closeModal();
+            renderDevices();
+            updateDataStats();
+        }
+
+        function editDevice(id) {
+            const device = getData('devices').find(d => d.id === id);
+            if (device) showDeviceForm(device);
+        }
+
+        function deleteDevice(id) {
+            if (!confirm('确定要删除这个设备吗?')) return;
+            const devices = getData('devices').filter(d => d.id !== id);
+            saveData('devices', devices);
+            renderDevices();
+            updateDataStats();
+        }
+
+        function showAccessoryForm(item = null) {
+            editingId = item ? item.id : null;
+            document.getElementById('modalTitle').textContent = item ? '编辑配件' : '新建配件';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">配件名称 <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="accName" value="${item ? item.name : ''}" placeholder="例如: AirPods Pro">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">品牌</label>
+                    <input type="text" class="form-input" id="accBrand" value="${item ? item.brand || '' : ''}" placeholder="例如: Apple">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">购买时间</label>
+                    <input type="date" class="form-input" id="accPurchaseDate" value="${item ? item.purchaseDate || '' : ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">购买价格</label>
+                    <input type="number" class="form-input" id="accPrice" value="${item ? item.price || '' : ''}" placeholder="例如: 1999">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">发布年份</label>
+                    <input type="number" class="form-input" id="accReleaseYear" value="${item ? item.releaseYear || '' : ''}" placeholder="例如: 2024">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">位置</label>
+                    <input type="text" class="form-input" id="accLocation" value="${item ? item.location || '' : ''}" placeholder="例如: 办公室">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">标签 (用逗号分隔)</label>
+                    <input type="text" class="form-input" id="accTags" value="${item ? item.tags || '' : ''}" placeholder="例如: 音频, 通勤用">
+                </div>
+                <button class="btn-primary" onclick="saveAccessory()">保存</button>
+                ${item ? '<button class="btn-danger" onclick="deleteAccessory(\'' + item.id + '\'); closeModal();">删除</button>' : ''}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function saveAccessory() {
+            const name = document.getElementById('accName').value.trim();
+            if (!name) {
+                alert('请填写配件名称');
+                return;
+            }
+
+            const accessory = {
+                id: editingId || generateId(),
+                name,
+                brand: document.getElementById('accBrand').value.trim(),
+                purchaseDate: document.getElementById('accPurchaseDate').value,
+                price: document.getElementById('accPrice').value,
+                releaseYear: document.getElementById('accReleaseYear').value,
+                location: document.getElementById('accLocation').value.trim(),
+                tags: document.getElementById('accTags').value.trim(),
+                frequency: editingId ? (getData('accessories').find(a => a.id === editingId)?.frequency || [false,false,false,false,false,false,false]) : [false,false,false,false,false,false,false]
+            };
+
+            const accessories = getData('accessories');
+            if (editingId) {
+                const index = accessories.findIndex(a => a.id === editingId);
+                if (index >= 0) accessories[index] = accessory;
+            } else {
+                accessories.push(accessory);
+            }
+
+            saveData('accessories', accessories);
+            closeModal();
+            renderAccessories();
+            updateDataStats();
+        }
+
+        function editAccessory(id) {
+            const item = getData('accessories').find(a => a.id === id);
+            if (item) showAccessoryForm(item);
+        }
+
+        function deleteAccessory(id) {
+            if (!confirm('确定要删除这个配件吗?')) return;
+            const accessories = getData('accessories').filter(a => a.id !== id);
+            saveData('accessories', accessories);
+            renderAccessories();
+            updateDataStats();
+        }
+
+        function showSubscriptionForm(sub = null) {
+            editingId = sub ? sub.id : null;
+            document.getElementById('modalTitle').textContent = sub ? '编辑订阅' : '新建订阅';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">订阅名称 <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="subName" value="${sub ? sub.name : ''}" placeholder="例如: iCloud+">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">品牌</label>
+                    <input type="text" class="form-input" id="subBrand" value="${sub ? sub.brand || '' : ''}" placeholder="例如: Apple">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">订阅价格</label>
+                    <input type="number" class="form-input" id="subPrice" value="${sub ? sub.price || '' : ''}" placeholder="例如: 68">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">付费周期</label>
+                    <select class="form-select" id="subCycle" onchange="handleCycleChange(this.value)">
+                        <option value="">请选择</option>
+                        <option value="daily" ${sub && sub.cycle === 'daily' ? 'selected' : ''}>每天 (1日)</option>
+                        <option value="weekly" ${sub && sub.cycle === 'weekly' ? 'selected' : ''}>每周 (7日)</option>
+                        <option value="monthly" ${sub && sub.cycle === 'monthly' ? 'selected' : ''}>每月 (30日)</option>
+                        <option value="quarterly" ${sub && sub.cycle === 'quarterly' ? 'selected' : ''}>每季度 (90日)</option>
+                        <option value="halfyear" ${sub && sub.cycle === 'halfyear' ? 'selected' : ''}>每半年 (180日)</option>
+                        <option value="yearly" ${sub && sub.cycle === 'yearly' ? 'selected' : ''}>每年 (365日)</option>
+                        <option value="custom" ${sub && sub.cycle && !['daily','weekly','monthly','quarterly','halfyear','yearly'].includes(sub.cycle) ? 'selected' : ''}>自定义</option>
+                    </select>
+                </div>
+                <div class="form-group" id="customCycleGroup" style="display: ${sub && sub.cycle && !['daily','weekly','monthly','quarterly','halfyear','yearly'].includes(sub.cycle) ? 'block' : 'none'}">
+                    <label class="form-label">自定义周期 (天)</label>
+                    <input type="number" class="form-input" id="subCustomCycle" value="${sub && sub.cycle && !['daily','weekly','monthly','quarterly','halfyear','yearly'].includes(sub.cycle) ? sub.cycle : ''}" placeholder="例如: 45">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">订阅日期</label>
+                    <input type="date" class="form-input" id="subStartDate" value="${sub ? sub.startDate || '' : ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">标签 (用逗号分隔)</label>
+                    <input type="text" class="form-input" id="subTags" value="${sub ? sub.tags || '' : ''}" placeholder="例如: 云服务, 必备">
+                </div>
+                <button class="btn-primary" onclick="saveSubscription()">保存</button>
+                ${sub ? '<button class="btn-danger" onclick="deleteSubscription(\'' + sub.id + '\'); closeModal();">删除</button>' : ''}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function handleCycleChange(value) {
+            document.getElementById('customCycleGroup').style.display = value === 'custom' ? 'block' : 'none';
+        }
+
+        function saveSubscription() {
+            const name = document.getElementById('subName').value.trim();
+            if (!name) {
+                alert('请填写订阅名称');
+                return;
+            }
+
+            let cycle = document.getElementById('subCycle').value;
+            if (cycle === 'custom') {
+                cycle = document.getElementById('subCustomCycle').value || '30';
+            }
+
+            const subscription = {
+                id: editingId || generateId(),
+                name,
+                brand: document.getElementById('subBrand').value.trim(),
+                price: document.getElementById('subPrice').value,
+                cycle,
+                startDate: document.getElementById('subStartDate').value,
+                tags: document.getElementById('subTags').value.trim(),
+                frequency: editingId ? (getData('subscriptions').find(s => s.id === editingId)?.frequency || [false,false,false,false,false,false,false]) : [false,false,false,false,false,false,false]
+            };
+
+            const subscriptions = getData('subscriptions');
+            if (editingId) {
+                const index = subscriptions.findIndex(s => s.id === editingId);
+                if (index >= 0) subscriptions[index] = subscription;
+            } else {
+                subscriptions.push(subscription);
+            }
+
+            saveData('subscriptions', subscriptions);
+            closeModal();
+            renderSubscriptions();
+            updateDataStats();
+        }
+
+        function editSubscription(id) {
+            const sub = getData('subscriptions').find(s => s.id === id);
+            if (sub) showSubscriptionForm(sub);
+        }
+
+        function deleteSubscription(id) {
+            if (!confirm('确定要删除这个订阅吗?')) return;
+            const subscriptions = getData('subscriptions').filter(s => s.id !== id);
+            saveData('subscriptions', subscriptions);
+            renderSubscriptions();
+            updateDataStats();
+        }
+
+        function showWishlistForm(item = null) {
+            editingId = item ? item.id : null;
+            document.getElementById('modalTitle').textContent = item ? '编辑欲购' : '新建欲购';
+            document.getElementById('modalBody').innerHTML = `
+                <div class="form-group">
+                    <label class="form-label">项目名称 <span class="required">*</span></label>
+                    <input type="text" class="form-input" id="wishName" value="${item ? item.name : ''}" placeholder="例如: MacBook Pro">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">品牌</label>
+                    <input type="text" class="form-input" id="wishBrand" value="${item ? item.brand || '' : ''}" placeholder="例如: Apple">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">发布时间</label>
+                    <input type="date" class="form-input" id="wishReleaseDate" value="${item ? item.releaseDate || '' : ''}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">价格</label>
+                    <input type="number" class="form-input" id="wishPrice" value="${item ? item.price || '' : ''}" placeholder="例如: 14999">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">入手理由</label>
+                    <textarea class="form-textarea" id="wishReason" placeholder="为什么想要这个?">${item ? item.reason || '' : ''}</textarea>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">标签 (用逗号分隔)</label>
+                    <input type="text" class="form-input" id="wishTags" value="${item ? item.tags || '' : ''}" placeholder="例如: 生产力, 升级">
+                </div>
+                <button class="btn-primary" onclick="saveWishlist()">保存</button>
+                ${item ? '<button class="btn-danger" onclick="deleteWishlist(\'' + item.id + '\'); closeModal();">删除</button>' : ''}
+            `;
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function saveWishlist() {
+            const name = document.getElementById('wishName').value.trim();
+            if (!name) {
+                alert('请填写项目名称');
+                return;
+            }
+
+            const item = {
+                id: editingId || generateId(),
+                name,
+                brand: document.getElementById('wishBrand').value.trim(),
+                releaseDate: document.getElementById('wishReleaseDate').value,
+                price: document.getElementById('wishPrice').value,
+                reason: document.getElementById('wishReason').value.trim(),
+                tags: document.getElementById('wishTags').value.trim()
+            };
+
+            const wishlist = getData('wishlist');
+            if (editingId) {
+                const index = wishlist.findIndex(w => w.id === editingId);
+                if (index >= 0) wishlist[index] = item;
+            } else {
+                wishlist.push(item);
+            }
+
+            saveData('wishlist', wishlist);
+            closeModal();
+            renderWishlist();
+            updateDataStats();
+        }
+
+        function editWishlist(id) {
+            const item = getData('wishlist').find(w => w.id === id);
+            if (item) showWishlistForm(item);
+        }
+
+        function deleteWishlist(id) {
+            if (!confirm('确定要删除这个欲购项目吗?')) return;
+            const wishlist = getData('wishlist').filter(w => w.id !== id);
+            saveData('wishlist', wishlist);
+            renderWishlist();
+            updateDataStats();
+        }
+
+        function updateDataStats() {
+            const devices = getData('devices');
+            const accessories = getData('accessories');
+            const subscriptions = getData('subscriptions');
+            const wishlist = getData('wishlist');
+
+            const deviceTotal = devices.reduce((sum, d) => sum + (parseFloat(d.price) || 0), 0);
+            const accessoryTotal = accessories.reduce((sum, a) => sum + (parseFloat(a.price) || 0), 0);
+            const wishlistTotal = wishlist.reduce((sum, w) => sum + (parseFloat(w.price) || 0), 0);
+
+            let subscriptionYearly = 0;
+            subscriptions.forEach(sub => {
+                const price = parseFloat(sub.price) || 0;
+                const cycleDays = { daily: 1, weekly: 7, monthly: 30, quarterly: 90, halfyear: 180, yearly: 365 }[sub.cycle] || parseInt(sub.cycle) || 30;
+                subscriptionYearly += (price * 365) / cycleDays;
+            });
+
+            document.getElementById('dataDeviceTotal').textContent = `¥${Math.round(deviceTotal)}`;
+            document.getElementById('dataAccessoryTotal').textContent = `¥${Math.round(accessoryTotal)}`;
+            document.getElementById('dataSubscriptionTotal').textContent = `¥${Math.round(subscriptionYearly)}`;
+            document.getElementById('dataWishlistTotal').textContent = `¥${Math.round(wishlistTotal)}`;
+        }
+
+        function exportData() {
+            const data = {
+                devices: getData('devices'),
+                accessories: getData('accessories'),
+                subscriptions: getData('subscriptions'),
+                wishlist: getData('wishlist'),
+                exportDate: new Date().toISOString()
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `device_manager_backup_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData() {
+            document.getElementById('importFile').click();
+        }
+
+        function handleImport(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.devices) saveData('devices', data.devices);
+                    if (data.accessories) saveData('accessories', data.accessories);
+                    if (data.subscriptions) saveData('subscriptions', data.subscriptions);
+                    if (data.wishlist) saveData('wishlist', data.wishlist);
+
+                    renderAll();
+                    updateDataStats();
+                    alert('数据导入成功!');
+                } catch (err) {
+                    alert('导入失败: 文件格式错误');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function confirmDeleteAll() {
+            if (!confirm('确定要删除所有数据吗? 此操作不可恢复!')) return;
+            if (!confirm('再次确认: 所有数据将被清空!')) return;
+
+            Object.values(STORAGE_KEYS).forEach(key => localStorage.removeItem(key));
+            renderAll();
+            updateDataStats();
+            alert('所有数据已删除');
+        }
+
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker registered'))
+                .catch(err => console.log('Service Worker registration failed'));
+        }
+    </script>
+</body>
+</html>
