@@ -140,7 +140,7 @@
 
         .fab {
             position: fixed;
-            bottom: 90px;
+            bottom: 120px;
             right: 20px;
             width: 56px;
             height: 56px;
@@ -348,6 +348,12 @@
             font-size: 16px;
             background: var(--bg-primary);
             -webkit-appearance: none;
+            height: 48px;
+        }
+
+        input[type="date"].form-input {
+            height: 48px;
+            line-height: 24px;
         }
 
         .form-input:focus, .form-select:focus, .form-textarea:focus {
@@ -523,10 +529,11 @@
 
         .tag {
             padding: 4px 10px;
-            background: var(--accent-red);
-            color: white;
+            background: rgba(255, 59, 48, 0.12);
+            color: #c41e3a;
             border-radius: 12px;
             font-size: 11px;
+            font-weight: 500;
         }
 
         .hidden-file-input {
