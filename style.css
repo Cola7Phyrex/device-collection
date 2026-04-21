@@ -60,6 +60,18 @@ body::before {
     z-index: 0;
 }
 
+body::after {
+    content: "";
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: max(env(safe-area-inset-top), 44px);
+    background: linear-gradient(180deg, rgba(234, 241, 251, 0.96) 0%, rgba(234, 241, 251, 0.72) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+
 button,
 input,
 select,
@@ -108,7 +120,7 @@ button {
 
 .app-shell {
     position: relative;
-    z-index: 1;
+    z-index: 2;
     max-width: 980px;
     margin: 0 auto;
     padding-top: 10px;
@@ -265,6 +277,21 @@ button {
     margin-bottom: 14px;
 }
 
+#page-subscriptions .card-stats {
+    margin-top: 12px;
+    margin-bottom: 10px;
+}
+
+#page-subscriptions .stat {
+    padding: 10px 14px;
+}
+
+#page-subscriptions .stat-value {
+    margin-top: 4px;
+    font-size: 22px;
+    line-height: 1.1;
+}
+
 .stat {
     flex: 1;
     min-width: 0;
@@ -350,6 +377,10 @@ button {
 
 .next-payment.overdue {
     color: var(--danger);
+}
+
+#page-subscriptions .frequency-bar {
+    margin-top: 16px;
 }
 
 .summary-box {
