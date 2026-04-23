@@ -16,6 +16,9 @@
     --danger: #d95b70;
     --success: #4f9b81;
     --line-soft: rgba(255, 255, 255, 0.35);
+    --tab-bar-offset: 12px;
+    --tab-bar-height: 82px;
+    --fab-tab-gap: 22px;
 }
 
 * {
@@ -487,7 +490,7 @@ button {
 .fab {
     position: fixed;
     right: 22px;
-    bottom: calc(env(safe-area-inset-bottom) + 94px);
+    bottom: calc(env(safe-area-inset-bottom) + var(--tab-bar-offset) + var(--tab-bar-height) + var(--fab-tab-gap));
     width: 62px;
     height: 62px;
     border-radius: 20px;
@@ -508,7 +511,7 @@ button {
     position: fixed;
     left: 16px;
     right: 16px;
-    bottom: calc(env(safe-area-inset-bottom) + 12px);
+    bottom: calc(env(safe-area-inset-bottom) + var(--tab-bar-offset));
     z-index: 25;
     display: grid;
     grid-template-columns: repeat(5, 1fr);
